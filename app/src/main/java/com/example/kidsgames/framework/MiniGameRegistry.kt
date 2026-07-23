@@ -1,9 +1,11 @@
 package com.example.kidsgames.framework
 
 import com.example.kidsgames.feature.colors.ColorsShapesMiniGame
+import com.example.kidsgames.feature.counting.CountingMiniGame
 import com.example.kidsgames.feature.findit.FindItMiniGame
 import com.example.kidsgames.feature.jigsaw.JigsawMiniGame
 import com.example.kidsgames.feature.letters.LettersMiniGame
+import com.example.kidsgames.feature.memory.MemoryMatchMiniGame
 import com.example.kidsgames.feature.numbers.NumbersMiniGame
 import com.example.kidsgames.feature.tapballoon.TapBalloonMiniGame
 
@@ -16,7 +18,9 @@ object MiniGameRegistry {
         JigsawMiniGame(),
         NumbersMiniGame(),
         LettersMiniGame(),
+        CountingMiniGame(),
         ColorsShapesMiniGame(),
+        MemoryMatchMiniGame(),
         FindItMiniGame(),
         TapBalloonMiniGame(),
     )

@@ -6,6 +6,8 @@
     <string name="game_letters">Letters</string>
     <string name="game_colors">Colors &amp; Shapes</string>
     <string name="game_findit">Find It</string>
+    <string name="game_memory">Memory Match</string>
+    <string name="game_counting">Counting</string>
     <string name="add_photo">Add a picture</string>
     <string name="play_again">Play again</string>
     <string name="back">Back</string>
