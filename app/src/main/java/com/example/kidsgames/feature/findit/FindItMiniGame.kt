@@ -28,8 +28,6 @@ import com.example.kidsgames.core.PL
 import com.example.kidsgames.core.PT
 import com.example.kidsgames.core.Phrases
 import com.example.kidsgames.core.SpeechService
-import com.example.kidsgames.core.Word
-import com.example.kidsgames.core.utterances
 import com.example.kidsgames.feature.jigsaw.PuzzleLogic
 import com.example.kidsgames.feature.jigsaw.SamplePicture
 import com.example.kidsgames.framework.GameServices
@@ -55,8 +53,6 @@ private fun newRound(): FindRound {
     val (locale, text) = listOf(EN to pic.en, PL to pic.pl, PT to pic.pt).random()
     return FindRound(options, target, text, locale)
 }
-
-private fun SamplePicture.word() = Word(en, pl, pt)
 
 class FindItMiniGame : MiniGame {
     override val info = MiniGameInfo(
@@ -101,11 +97,18 @@ class FindItMiniGame : MiniGame {
                                     services.audio.playCorrect()
                                     val cheer = Phrases.cheer(cheerStep)
                                     cheerStep++
+                                    val cheerText = when (round.locale) {
+                                        PL -> cheer.pl
+                                        PT -> cheer.pt
+                                        else -> cheer.en
+                                    }
                                     val next = newRound()
-                                    // Confirm the word (3 languages) + cheer, then the next prompt.
+                                    // Short cheer, then say the next word to find (no long recap).
                                     services.speech.speakSequence(
-                                        pic.word().utterances() + cheer.utterances() +
-                                            listOf(SpeechService.Utterance(next.prompt, next.locale))
+                                        listOf(
+                                            SpeechService.Utterance(cheerText, round.locale),
+                                            SpeechService.Utterance(next.prompt, next.locale),
+                                        )
                                     )
                                     round = next
                                 } else {

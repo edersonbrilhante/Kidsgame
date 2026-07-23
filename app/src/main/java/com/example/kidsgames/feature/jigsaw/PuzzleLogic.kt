@@ -50,6 +50,17 @@ object PuzzleLogic {
         return tiles
     }
 
+    // Soft background colors cycled behind emoji puzzle pictures.
+    private val EMOJI_BG = listOf(
+        Color.rgb(0x9B, 0xD7, 0xFF),
+        Color.rgb(0xFF, 0xD6, 0x8A),
+        Color.rgb(0xB8, 0xE9, 0xC4),
+        Color.rgb(0xF8, 0xC1, 0xDA),
+        Color.rgb(0xCF, 0xC4, 0xF5),
+        Color.rgb(0xFF, 0xC1, 0xA6),
+        Color.rgb(0xA6, 0xE6, 0xE6),
+    )
+
     /** Hand-drawn "hero" pictures (nicer than a plain emoji), shown first. */
     private val specials: List<SamplePicture> = listOf(
         SamplePicture("soccer",  "⚽",  en = "Ball",    pl = "Piłka",   pt = "Bola")    { soccer(it) },
@@ -83,17 +94,6 @@ object PuzzleLogic {
 
     /** Default picture so the game is playable before importing a photo. */
     fun sample(size: Int = 900): Bitmap = soccer(size)
-
-    // Soft background colors cycled behind emoji puzzle pictures.
-    private val EMOJI_BG = listOf(
-        Color.rgb(0x9B, 0xD7, 0xFF),
-        Color.rgb(0xFF, 0xD6, 0x8A),
-        Color.rgb(0xB8, 0xE9, 0xC4),
-        Color.rgb(0xF8, 0xC1, 0xDA),
-        Color.rgb(0xCF, 0xC4, 0xF5),
-        Color.rgb(0xFF, 0xC1, 0xA6),
-        Color.rgb(0xA6, 0xE6, 0xE6),
-    )
 
     /** Renders a big color emoji centered on a colored background as a puzzle picture. */
     fun emojiPicture(emoji: String, bg: Int, size: Int = 900): Bitmap {
