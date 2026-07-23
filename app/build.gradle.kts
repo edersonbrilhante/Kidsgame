@@ -12,8 +12,23 @@ android {
         applicationId = "com.example.kidsgames"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // CI passes VERSION_CODE (the run number) so each build is an upgrade; 1 locally.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = "1.0.${System.getenv("VERSION_CODE") ?: "0"}"
+    }
+
+    signingConfigs {
+        // Stable key so every build has the same signature (required for in-place upgrades).
+        // This is a debug key committed for family sideloading — NOT for the Play Store.
+        getByName("debug") {
+            val ks = file("matteo-debug.keystore")
+            if (ks.exists()) {
+                storeFile = ks
+                storePassword = "matteo123"
+                keyAlias = "matteo"
+                keyPassword = "matteo123"
+            }
+        }
     }
 
     buildTypes {

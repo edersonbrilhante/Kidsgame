@@ -124,7 +124,7 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     var resetKey by remember(pieces) { mutableIntStateOf(0) }
     var won by remember(pieces) { mutableStateOf(false) }
 
-    // On winning, speak the word again + "You did it!" in all three languages.
+    // On winning, say the picture's word again in all three languages (no spoken cheer).
     LaunchedEffect(won) {
         if (won) currentPic?.let { pic ->
             services.speech.speakSequence(
@@ -132,9 +132,6 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
                     SpeechService.Utterance(pic.en, Locale.ENGLISH),
                     SpeechService.Utterance(pic.pl, Locale("pl")),
                     SpeechService.Utterance(pic.pt, Locale("pt", "BR")),
-                    SpeechService.Utterance("You did it!", Locale.ENGLISH),
-                    SpeechService.Utterance("Udało się!", Locale("pl")),
-                    SpeechService.Utterance("Você conseguiu!", Locale("pt", "BR")),
                 )
             )
         }
