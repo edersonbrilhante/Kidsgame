@@ -62,6 +62,6 @@ jobs:
           cp apk/app-debug.apk "KidsPuzzle-${TAG}.apk"
           gh release create "$TAG" "KidsPuzzle-${TAG}.apk" \
             --repo "${{ github.repository }}" \
-            --title "Kids Puzzle ${TAG}" \
+            --title "Matteo Games ${TAG}" \
             --notes "Automated build from commit ${{ github.sha }}." \
             --latest
