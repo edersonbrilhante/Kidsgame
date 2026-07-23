@@ -3,7 +3,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Bold white "M" for Matteo -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M42,34h10a5,5 0 1 1 10,0h10v10a5,5 0 1 1 0,10v10H62a5,5 0 1 0 -10,0H42V54a5,5 0 1 1 0,-10z" />
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="11"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000"
+        android:pathData="M36,72 L36,36 L54,57 L72,36 L72,72" />
+    <!-- Playful dots -->
+    <path android:fillColor="#EF5DA8"
+        android:pathData="M44,82 m-4.5,0 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0" />
+    <path android:fillColor="#FFC23C"
+        android:pathData="M54,82 m-4.5,0 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0" />
+    <path android:fillColor="#57C785"
+        android:pathData="M64,82 m-4.5,0 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0" />
 </vector>
