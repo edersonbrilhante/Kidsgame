@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -30,6 +31,7 @@ import com.example.kidsgames.core.PL
 import com.example.kidsgames.core.PT
 import com.example.kidsgames.core.SpeechService
 import com.example.kidsgames.core.Word
+import com.example.kidsgames.feature.jigsaw.VOCAB
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidCircleButton
 import com.example.kidsgames.framework.KidScreen
@@ -38,44 +40,54 @@ import com.example.kidsgames.framework.MiniGameInfo
 import com.example.kidsgames.ui.theme.Coral
 import com.example.kidsgames.ui.theme.Tangerine
 
-private data class LetterCard(val letter: String, val word: Word)
-
-private val LETTERS = listOf(
-    LetterCard("A", Word("apple", "jabłko", "maçã", "🍎")),
-    LetterCard("B", Word("ball", "piłka", "bola", "⚽")),
-    LetterCard("C", Word("cat", "kot", "gato", "🐱")),
-    LetterCard("D", Word("dog", "pies", "cachorro", "🐶")),
-    LetterCard("E", Word("elephant", "słoń", "elefante", "🐘")),
-    LetterCard("F", Word("fish", "ryba", "peixe", "🐟")),
-    LetterCard("G", Word("grapes", "winogrona", "uvas", "🍇")),
-    LetterCard("H", Word("house", "dom", "casa", "🏠")),
-    LetterCard("I", Word("ice", "lód", "gelo", "🧊")),
-    LetterCard("J", Word("juice", "sok", "suco", "🧃")),
-    LetterCard("K", Word("key", "klucz", "chave", "🔑")),
-    LetterCard("L", Word("lion", "lew", "leão", "🦁")),
-    LetterCard("M", Word("mouse", "mysz", "rato", "🐭")),
-    LetterCard("N", Word("nose", "nos", "nariz", "👃")),
-    LetterCard("O", Word("orange", "pomarańcza", "laranja", "🍊")),
-    LetterCard("P", Word("pig", "świnia", "porco", "🐷")),
-    LetterCard("Q", Word("queen", "królowa", "rainha", "👑")),
-    LetterCard("R", Word("rabbit", "królik", "coelho", "🐰")),
-    LetterCard("S", Word("sun", "słońce", "sol", "☀️")),
-    LetterCard("T", Word("tree", "drzewo", "árvore", "🌳")),
-    LetterCard("U", Word("umbrella", "parasol", "guarda-chuva", "☂️")),
-    LetterCard("V", Word("violin", "skrzypce", "violino", "🎻")),
-    LetterCard("W", Word("water", "woda", "água", "💧")),
-    LetterCard("X", Word("fox", "lis", "raposa", "🦊")),
-    LetterCard("Y", Word("yo-yo", "jo-jo", "ioiô", "🪀")),
-    LetterCard("Z", Word("zebra", "zebra", "zebra", "🦓")),
+// One guaranteed word per letter (covers letters the vocabulary may lack, e.g. Q, X, Y).
+private val BASE: List<Pair<Char, Word>> = listOf(
+    'A' to Word("apple", "jabłko", "maçã", "🍎"),
+    'B' to Word("ball", "piłka", "bola", "⚽"),
+    'C' to Word("cat", "kot", "gato", "🐱"),
+    'D' to Word("dog", "pies", "cachorro", "🐶"),
+    'E' to Word("elephant", "słoń", "elefante", "🐘"),
+    'F' to Word("fish", "ryba", "peixe", "🐟"),
+    'G' to Word("grapes", "winogrona", "uvas", "🍇"),
+    'H' to Word("house", "dom", "casa", "🏠"),
+    'I' to Word("ice", "lód", "gelo", "🧊"),
+    'J' to Word("juice", "sok", "suco", "🧃"),
+    'K' to Word("key", "klucz", "chave", "🔑"),
+    'L' to Word("lion", "lew", "leão", "🦁"),
+    'M' to Word("mouse", "mysz", "rato", "🐭"),
+    'N' to Word("nose", "nos", "nariz", "👃"),
+    'O' to Word("orange", "pomarańcza", "laranja", "🍊"),
+    'P' to Word("pig", "świnia", "porco", "🐷"),
+    'Q' to Word("queen", "królowa", "rainha", "👑"),
+    'R' to Word("rabbit", "królik", "coelho", "🐰"),
+    'S' to Word("sun", "słońce", "sol", "☀️"),
+    'T' to Word("tree", "drzewo", "árvore", "🌳"),
+    'U' to Word("umbrella", "parasol", "guarda-chuva", "☂️"),
+    'V' to Word("violin", "skrzypce", "violino", "🎻"),
+    'W' to Word("water", "woda", "água", "💧"),
+    'X' to Word("fox", "lis", "raposa", "🦊"),
+    'Y' to Word("yo-yo", "jo-jo", "ioiô", "🪀"),
+    'Z' to Word("zebra", "zebra", "zebra", "🦓"),
 )
 
-private fun speakCard(services: GameServices, card: LetterCard) {
+/**
+ * For each letter A–Z, a pool of words = the curated base word plus every vocabulary
+ * word that starts with that letter. A random one is shown each time the letter is
+ * selected (grows automatically as the vocabulary grows).
+ */
+private val LETTER_POOL: Map<Char, List<Word>> = ('A'..'Z').associateWith { c ->
+    val base = BASE.filter { it.first == c }.map { it.second }
+    val fromVocab = VOCAB.filter { it.en.firstOrNull()?.uppercaseChar() == c }
+    (base + fromVocab).distinctBy { it.emoji }
+}
+
+private fun speakLetter(services: GameServices, letter: Char, word: Word) {
     services.speech.speakSequence(
         listOf(
-            SpeechService.Utterance(card.letter, EN),
-            SpeechService.Utterance(card.word.en, EN),
-            SpeechService.Utterance(card.word.pl, PL),
-            SpeechService.Utterance(card.word.pt, PT),
+            SpeechService.Utterance(letter.toString(), EN),
+            SpeechService.Utterance(word.en, EN),
+            SpeechService.Utterance(word.pl, PL),
+            SpeechService.Utterance(word.pt, PT),
         )
     )
 }
@@ -91,9 +103,16 @@ class LettersMiniGame : MiniGame {
     @Composable
     override fun Screen(services: GameServices, onExit: () -> Unit) {
         var i by remember { mutableIntStateOf(0) }
-        val card = LETTERS[i]
+        val letter = 'A' + i
+        val pool = LETTER_POOL.getValue(letter)
+        var word by remember { mutableStateOf(pool.random()) }
 
-        LaunchedEffect(i) { speakCard(services, card) }
+        // Pick a new random word (and say it) whenever the letter changes.
+        LaunchedEffect(i) {
+            val w = LETTER_POOL.getValue('A' + i).random()
+            word = w
+            speakLetter(services, 'A' + i, w)
+        }
 
         KidScreen(onExit = onExit, colors = listOf(Color(0xFFFFF0E4), Color(0xFFFFE7EC))) {
             Column(
@@ -101,9 +120,13 @@ class LettersMiniGame : MiniGame {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                // Big letter — tap to hear the letter and the word.
+                // Big letter — tap for another random word starting with this letter.
                 Surface(
-                    onClick = { speakCard(services, card) },
+                    onClick = {
+                        val w = pool.random()
+                        word = w
+                        speakLetter(services, letter, w)
+                    },
                     shape = MaterialTheme.shapes.extraLarge,
                     color = Color.White,
                     shadowElevation = 8.dp,
@@ -111,7 +134,7 @@ class LettersMiniGame : MiniGame {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
-                            card.letter,
+                            letter.toString(),
                             fontSize = 120.sp,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.secondary,
@@ -120,10 +143,10 @@ class LettersMiniGame : MiniGame {
                 }
 
                 Spacer(Modifier.height(20.dp))
-                Text(card.word.emoji, fontSize = 88.sp)
+                Text(word.emoji, fontSize = 88.sp)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    card.word.en,
+                    word.en,
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
@@ -132,12 +155,12 @@ class LettersMiniGame : MiniGame {
 
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     KidCircleButton(
-                        onClick = { i = (i - 1 + LETTERS.size) % LETTERS.size },
+                        onClick = { i = (i - 1 + 26) % 26 },
                         glyph = "◀",
                         size = 72,
                     )
                     KidCircleButton(
-                        onClick = { i = (i + 1) % LETTERS.size },
+                        onClick = { i = (i + 1) % 26 },
                         glyph = "▶",
                         size = 72,
                     )
