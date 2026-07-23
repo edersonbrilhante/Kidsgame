@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Kids Puzzle</string>
+    <string name="game_jigsaw">Puzzle</string>
+    <string name="game_tapballoon">Pop the Balloons</string>
+    <string name="add_photo">Add a picture</string>
+    <string name="play_again">Play again</string>
+    <string name="back">Back</string>
+    <string name="parental_gate_prompt">Grown-ups only: tap the number seven</string>
+</resources>
