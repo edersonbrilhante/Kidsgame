@@ -48,6 +48,7 @@ class TapBalloonMiniGame : MiniGame {
         id = "tapballoon",
         titleRes = R.string.game_tapballoon,
         iconRes = R.drawable.ic_balloon,
+        emoji = "🎈",
         gradient = listOf(Bubblegum, Tangerine),
     )
 

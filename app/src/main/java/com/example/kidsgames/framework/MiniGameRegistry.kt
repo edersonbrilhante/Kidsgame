@@ -1,6 +1,10 @@
 package com.example.kidsgames.framework
 
+import com.example.kidsgames.feature.colors.ColorsShapesMiniGame
+import com.example.kidsgames.feature.findit.FindItMiniGame
 import com.example.kidsgames.feature.jigsaw.JigsawMiniGame
+import com.example.kidsgames.feature.letters.LettersMiniGame
+import com.example.kidsgames.feature.numbers.NumbersMiniGame
 import com.example.kidsgames.feature.tapballoon.TapBalloonMiniGame
 
 /**
@@ -10,6 +14,10 @@ import com.example.kidsgames.feature.tapballoon.TapBalloonMiniGame
 object MiniGameRegistry {
     val games: List<MiniGame> = listOf(
         JigsawMiniGame(),
+        NumbersMiniGame(),
+        LettersMiniGame(),
+        ColorsShapesMiniGame(),
+        FindItMiniGame(),
         TapBalloonMiniGame(),
     )
 

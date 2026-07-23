@@ -2,6 +2,10 @@
     <string name="app_name">Kids Puzzle</string>
     <string name="game_jigsaw">Puzzle</string>
     <string name="game_tapballoon">Pop the Balloons</string>
+    <string name="game_numbers">Numbers</string>
+    <string name="game_letters">Letters</string>
+    <string name="game_colors">Colors &amp; Shapes</string>
+    <string name="game_findit">Find It</string>
     <string name="add_photo">Add a picture</string>
     <string name="play_again">Play again</string>
     <string name="back">Back</string>

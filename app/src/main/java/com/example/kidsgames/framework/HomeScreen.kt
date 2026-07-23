@@ -111,11 +111,15 @@ private fun GameCard(info: MiniGameInfo, onClick: () -> Unit) {
                         .background(Color.White.copy(alpha = 0.9f), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Image(
-                        painter = painterResource(info.iconRes),
-                        contentDescription = null,
-                        modifier = Modifier.size(84.dp),
-                    )
+                    if (info.emoji != null) {
+                        Text(info.emoji, fontSize = 64.sp)
+                    } else if (info.iconRes != 0) {
+                        Image(
+                            painter = painterResource(info.iconRes),
+                            contentDescription = null,
+                            modifier = Modifier.size(84.dp),
+                        )
+                    }
                 }
                 Spacer(Modifier.height(20.dp))
                 Text(

@@ -117,6 +117,22 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
         }
     }
 
+    // On winning, speak the word again + "You did it!" in all three languages.
+    LaunchedEffect(won) {
+        if (won) currentPic?.let { pic ->
+            services.speech.speakSequence(
+                listOf(
+                    SpeechService.Utterance(pic.en, Locale.ENGLISH),
+                    SpeechService.Utterance(pic.pl, Locale("pl")),
+                    SpeechService.Utterance(pic.pt, Locale("pt", "BR")),
+                    SpeechService.Utterance("You did it!", Locale.ENGLISH),
+                    SpeechService.Utterance("Udało się!", Locale("pl")),
+                    SpeechService.Utterance("Você conseguiu!", Locale("pt", "BR")),
+                )
+            )
+        }
+    }
+
     val tiles = remember(source, grid) {
         source?.let { PuzzleLogic.slice(it, grid, grid) } ?: emptyList()
     }

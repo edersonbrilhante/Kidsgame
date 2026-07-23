@@ -6,10 +6,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -107,6 +110,26 @@ fun KidCircleButton(
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(glyph, fontSize = (size * 0.42f).sp)
+        }
+    }
+}
+
+/**
+ * Standard page scaffold for a minigame: gradient background + a round back button
+ * in the top-left. The [content] lays out below the back button in a column.
+ */
+@Composable
+fun KidScreen(
+    onExit: () -> Unit,
+    colors: List<Color> = listOf(SkyTop, SkyBottom),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    KidBackground(colors = colors) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                KidCircleButton(onClick = onExit, glyph = "◀")
+            }
+            content()
         }
     }
 }

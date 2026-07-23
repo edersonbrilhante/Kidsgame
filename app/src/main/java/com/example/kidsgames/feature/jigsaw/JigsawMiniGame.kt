@@ -13,6 +13,7 @@ class JigsawMiniGame : MiniGame {
         id = "jigsaw",
         titleRes = R.string.game_jigsaw,
         iconRes = R.drawable.ic_jigsaw,
+        emoji = "🧩",
         gradient = listOf(SkyBlue, Aqua),
     )
 
