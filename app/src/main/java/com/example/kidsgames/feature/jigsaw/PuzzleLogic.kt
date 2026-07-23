@@ -50,8 +50,8 @@ object PuzzleLogic {
         return tiles
     }
 
-    /** Built-in themed pictures the child can choose between (no photo needed). */
-    val samples: List<SamplePicture> = listOf(
+    /** Hand-drawn "hero" pictures (nicer than a plain emoji), shown first. */
+    private val specials: List<SamplePicture> = listOf(
         SamplePicture("soccer",  "⚽",  en = "Ball",    pl = "Piłka",   pt = "Bola")    { soccer(it) },
         SamplePicture("dragon",  "🐲",  en = "Dragon",  pl = "Smok",    pt = "Dragão")  { dragon(it) },
         SamplePicture("web",     "🕷️", en = "Spider",  pl = "Pająk",   pt = "Aranha")  { webHero(it) },
@@ -65,8 +65,54 @@ object PuzzleLogic {
         SamplePicture("home",    "🏠",  en = "House",   pl = "Dom",     pt = "Casa")    { scene(it) },
     )
 
+    /**
+     * The full picture library: the hand-drawn specials followed by the whole emoji
+     * [VOCAB]. Each vocabulary word becomes a puzzle + spoken flashcard automatically.
+     */
+    val samples: List<SamplePicture> = specials + VOCAB.mapIndexed { i, w ->
+        val bg = EMOJI_BG[i % EMOJI_BG.size]
+        SamplePicture(
+            id = "v$i",
+            emoji = w.emoji,
+            en = w.en,
+            pl = w.pl,
+            pt = w.pt,
+            draw = { size -> emojiPicture(w.emoji, bg, size) },
+        )
+    }
+
     /** Default picture so the game is playable before importing a photo. */
     fun sample(size: Int = 900): Bitmap = soccer(size)
+
+    // Soft background colors cycled behind emoji puzzle pictures.
+    private val EMOJI_BG = listOf(
+        Color.rgb(0x9B, 0xD7, 0xFF),
+        Color.rgb(0xFF, 0xD6, 0x8A),
+        Color.rgb(0xB8, 0xE9, 0xC4),
+        Color.rgb(0xF8, 0xC1, 0xDA),
+        Color.rgb(0xCF, 0xC4, 0xF5),
+        Color.rgb(0xFF, 0xC1, 0xA6),
+        Color.rgb(0xA6, 0xE6, 0xE6),
+    )
+
+    /** Renders a big color emoji centered on a colored background as a puzzle picture. */
+    fun emojiPicture(emoji: String, bg: Int, size: Int = 900): Bitmap {
+        val (bmp, canvas) = blank(size)
+        val p = Paint(Paint.ANTI_ALIAS_FLAG)
+        val s = size.toFloat()
+        p.color = bg
+        canvas.drawRect(0f, 0f, s, s, p)
+        p.color = Color.argb(70, 255, 255, 255)
+        canvas.drawCircle(s / 2f, s / 2f, s * 0.42f, p)
+
+        val tp = Paint(Paint.ANTI_ALIAS_FLAG)
+        tp.textAlign = Paint.Align.CENTER
+        tp.textSize = s * 0.6f
+        val fm = tp.fontMetrics
+        val baseline = s / 2f - (fm.ascent + fm.descent) / 2f
+        canvas.drawText(emoji, s / 2f, baseline, tp)
+        return bmp
+    }
 
     // --- Drawing helpers -----------------------------------------------------
 

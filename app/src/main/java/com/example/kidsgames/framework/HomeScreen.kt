@@ -49,7 +49,7 @@ fun HomeScreen(onSelect: (String) -> Unit) {
             Text(text = "🌈", fontSize = 56.sp)
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Let's Play!",
+                text = "Matteo Games",
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
