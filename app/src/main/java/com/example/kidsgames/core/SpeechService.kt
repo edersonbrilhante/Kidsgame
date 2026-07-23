@@ -23,7 +23,7 @@ class SpeechService(context: Context) {
     private val queue = ArrayDeque<Utterance>()
     private var pendingOnReady: (() -> Unit)? = null
 
-    private val tts = TextToSpeech(context.applicationContext) { status ->
+    private val tts: TextToSpeech = TextToSpeech(context.applicationContext) { status ->
         ready = status == TextToSpeech.SUCCESS
         if (ready) {
             tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
