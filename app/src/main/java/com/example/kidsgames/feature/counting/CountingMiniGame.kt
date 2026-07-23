@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kidsgames.R
 import com.example.kidsgames.core.Word
-import com.example.kidsgames.core.say
+import com.example.kidsgames.core.sayOne
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidScreen
 import com.example.kidsgames.framework.MiniGame
@@ -97,7 +97,7 @@ class CountingMiniGame : MiniGame {
                             onClick = {
                                 if (choice == round.n) {
                                     services.audio.playCorrect()
-                                    services.speech.say(NUMBER_WORDS[round.n - 1])
+                                    services.speech.sayOne(NUMBER_WORDS[round.n - 1])
                                     round = newRound()
                                 }
                             },

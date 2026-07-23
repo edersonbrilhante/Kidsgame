@@ -25,6 +25,12 @@ fun Word.utterances(): List<SpeechService.Utterance> = listOf(
 /** Speak a [Word] in English → Polish → Portuguese. */
 fun SpeechService.say(word: Word) = speakSequence(word.utterances())
 
+/** Speak a [Word] in just one randomly chosen language (fast, no three-language delay). */
+fun SpeechService.sayOne(word: Word) {
+    val (locale, text) = listOf(EN to word.en, PL to word.pl, PT to word.pt).random()
+    speak(text, locale)
+}
+
 /** Encouraging phrases spoken after a correct answer or a win. */
 object Phrases {
     val praise: List<Word> = listOf(

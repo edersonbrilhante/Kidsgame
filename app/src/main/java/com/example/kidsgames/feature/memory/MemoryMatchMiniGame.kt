@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kidsgames.R
 import com.example.kidsgames.core.Word
-import com.example.kidsgames.core.say
+import com.example.kidsgames.core.sayOne
 import com.example.kidsgames.feature.jigsaw.PuzzleLogic
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidScreen
@@ -69,7 +69,7 @@ class MemoryMatchMiniGame : MiniGame {
         fun onTap(card: MCard) {
             if (busy || card.faceUp || card.matched) return
             card.faceUp = true
-            services.speech.say(card.word)
+            services.speech.sayOne(card.word)
             val a = first
             if (a == null) {
                 first = card

@@ -53,11 +53,14 @@ jobs:
           VERSION_CODE: ${{ github.run_number }}
         run: gradle :app:assembleDebug --no-daemon
 
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk MatteoGames.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v5
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: MatteoGames-debug
+          path: MatteoGames.apk
           if-no-files-found: error
 
   # Publishes the built APK as a GitHub Release, but only after `build` succeeds
@@ -72,7 +75,7 @@ jobs:
       - name: Download built APK
         uses: actions/download-artifact@v5
         with:
-          name: app-debug
+          name: MatteoGames-debug
           path: apk
 
       - name: Publish GitHub Release
@@ -80,9 +83,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="v1.0.${{ github.run_number }}"
-          cp apk/app-debug.apk "MatteoGames-${TAG}.apk"
+          cp apk/MatteoGames.apk "MatteoGames-${TAG}.apk"
           gh release create "$TAG" "MatteoGames-${TAG}.apk" \
             --repo "${{ github.repository }}" \
             --title "Matteo Games ${TAG}" \
             --notes "Automated build from commit ${{ github.sha }}." \
             --latest
+
+      - name: Prune old releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Keep only the newest release/tag; delete the rest.
+          gh release list --repo "${{ github.repository }}" --json tagName,createdAt \
+            --jq 'sort_by(.createdAt) | reverse | .[1:] | .[].tagName' \
+          | while read -r old; do
+              [ -n "$old" ] && gh release delete "$old" --repo "${{ github.repository }}" --cleanup-tag --yes
+            done
