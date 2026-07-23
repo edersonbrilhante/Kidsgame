@@ -80,8 +80,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="v1.0.${{ github.run_number }}"
-          cp apk/app-debug.apk "KidsPuzzle-${TAG}.apk"
-          gh release create "$TAG" "KidsPuzzle-${TAG}.apk" \
+          cp apk/app-debug.apk "MatteoGames-${TAG}.apk"
+          gh release create "$TAG" "MatteoGames-${TAG}.apk" \
             --repo "${{ github.repository }}" \
             --title "Matteo Games ${TAG}" \
             --notes "Automated build from commit ${{ github.sha }}." \
