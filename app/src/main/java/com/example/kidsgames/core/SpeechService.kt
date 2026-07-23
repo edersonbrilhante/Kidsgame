@@ -68,6 +68,12 @@ class SpeechService(context: Context) {
         tts.speak(item.text, TextToSpeech.QUEUE_FLUSH, null, "u${item.hashCode()}")
     }
 
+    /** Stop any current/queued speech without shutting the engine down. */
+    fun stop() {
+        queue.clear()
+        if (ready) tts.stop()
+    }
+
     fun shutdown() {
         tts.stop()
         tts.shutdown()
