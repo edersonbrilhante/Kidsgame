@@ -14,7 +14,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,10 +25,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
 import com.example.kidsgames.R
-import com.example.kidsgames.core.Phrases
 import com.example.kidsgames.core.Word
 import com.example.kidsgames.core.say
-import com.example.kidsgames.core.utterances
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidScreen
 import com.example.kidsgames.framework.MiniGame
@@ -92,7 +89,6 @@ class ColorsShapesMiniGame : MiniGame {
     @Composable
     override fun Screen(services: GameServices, onExit: () -> Unit) {
         var round by remember { mutableStateOf(newRound()) }
-        var cheerStep by remember { mutableIntStateOf(0) }
 
         // Say the first prompt once; later prompts are spoken from onCorrect below.
         LaunchedEffect(Unit) { services.speech.say(round.prompt) }
@@ -111,13 +107,9 @@ class ColorsShapesMiniGame : MiniGame {
                             ShapeTile(tile = tile, sizeDp = 150) {
                                 if (index == round.correctIndex) {
                                     services.audio.playCorrect()
-                                    val cheer = Phrases.cheer(cheerStep)
-                                    cheerStep++
                                     val next = newRound()
                                     round = next
-                                    services.speech.speakSequence(
-                                        cheer.utterances() + next.prompt.utterances()
-                                    )
+                                    services.speech.say(next.prompt)
                                 } else {
                                     // Gentle retry: say the prompt again.
                                     services.speech.say(round.prompt)

@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,8 +25,6 @@ import com.example.kidsgames.R
 import com.example.kidsgames.core.EN
 import com.example.kidsgames.core.PL
 import com.example.kidsgames.core.PT
-import com.example.kidsgames.core.Phrases
-import com.example.kidsgames.core.SpeechService
 import com.example.kidsgames.feature.jigsaw.PuzzleLogic
 import com.example.kidsgames.feature.jigsaw.SamplePicture
 import com.example.kidsgames.framework.GameServices
@@ -65,7 +62,6 @@ class FindItMiniGame : MiniGame {
     @Composable
     override fun Screen(services: GameServices, onExit: () -> Unit) {
         var round by remember { mutableStateOf(newRound()) }
-        var cheerStep by remember { mutableIntStateOf(0) }
 
         // Speak the first word to find; later prompts are spoken from onCorrect below.
         LaunchedEffect(Unit) { services.speech.speak(round.prompt, round.locale) }
@@ -95,21 +91,9 @@ class FindItMiniGame : MiniGame {
                             PictureTile(emoji = pic.emoji, sizeDp = 140) {
                                 if (index == round.correctIndex) {
                                     services.audio.playCorrect()
-                                    val cheer = Phrases.cheer(cheerStep)
-                                    cheerStep++
-                                    val cheerText = when (round.locale) {
-                                        PL -> cheer.pl
-                                        PT -> cheer.pt
-                                        else -> cheer.en
-                                    }
                                     val next = newRound()
-                                    // Short cheer, then say the next word to find (no long recap).
-                                    services.speech.speakSequence(
-                                        listOf(
-                                            SpeechService.Utterance(cheerText, round.locale),
-                                            SpeechService.Utterance(next.prompt, next.locale),
-                                        )
-                                    )
+                                    // Just move on and say the next word to find.
+                                    services.speech.speak(next.prompt, next.locale)
                                     round = next
                                 } else {
                                     services.speech.speak(round.prompt, round.locale)
