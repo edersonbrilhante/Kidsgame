@@ -3,6 +3,9 @@ package com.example.kidsgames.framework
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import com.example.kidsgames.ui.theme.SkyBlue
+import com.example.kidsgames.ui.theme.Grape
 
 /** Static metadata shown on the home carousel. */
 data class MiniGameInfo(
@@ -10,6 +13,8 @@ data class MiniGameInfo(
     @StringRes val titleRes: Int,
     @DrawableRes val iconRes: Int,
     val minAgeMonths: Int = 36,
+    /** Two-stop gradient that gives each game card its own color. */
+    val gradient: List<Color> = listOf(SkyBlue, Grape),
 )
 
 /**

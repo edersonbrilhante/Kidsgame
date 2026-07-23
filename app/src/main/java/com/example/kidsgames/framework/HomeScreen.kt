@@ -1,7 +1,10 @@
 package com.example.kidsgames.framework
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,44 +17,61 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.Image
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
 fun HomeScreen(onSelect: (String) -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.height(24.dp))
-        Text(
-            text = "Choose a game",
-            fontSize = 34.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Spacer(Modifier.height(28.dp))
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp),
+    KidBackground {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            items(MiniGameRegistry.games) { game ->
-                GameCard(game.info) { onSelect(game.info.id) }
+            Spacer(Modifier.height(48.dp))
+            Text(text = "🌈", fontSize = 56.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Let's Play!",
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = "Pick a game",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            )
+            Spacer(Modifier.height(28.dp))
+
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                state = rememberLazyListState(),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 20.dp),
+            ) {
+                items(MiniGameRegistry.games) { game ->
+                    GameCard(game.info) { onSelect(game.info.id) }
+                }
             }
         }
     }
@@ -59,32 +79,52 @@ fun HomeScreen(onSelect: (String) -> Unit) {
 
 @Composable
 private fun GameCard(info: MiniGameInfo, onClick: () -> Unit) {
-    Card(
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 0.94f else 1f, label = "cardPress")
+
+    Surface(
+        onClick = onClick,
         modifier = Modifier
-            .size(width = 200.dp, height = 240.dp)
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+            .scale(scale)
+            .size(width = 220.dp, height = 280.dp),
+        shape = MaterialTheme.shapes.extraLarge,
+        shadowElevation = 10.dp,
+        interactionSource = interaction,
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+                .background(Brush.verticalGradient(info.gradient)),
         ) {
-            Image(
-                painter = painterResource(info.iconRes),
-                contentDescription = null,
-                modifier = Modifier.size(120.dp),
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = stringResource(info.titleRes),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                // White circle "badge" holding the game icon.
+                Box(
+                    modifier = Modifier
+                        .size(128.dp)
+                        .background(Color.White.copy(alpha = 0.9f), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = painterResource(info.iconRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(84.dp),
+                    )
+                }
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    text = stringResource(info.titleRes),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
