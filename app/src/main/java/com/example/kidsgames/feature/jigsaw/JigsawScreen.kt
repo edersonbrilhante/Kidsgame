@@ -117,6 +117,13 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
         }
     }
 
+    val tiles = remember(source, grid) {
+        source?.let { PuzzleLogic.slice(it, grid, grid) } ?: emptyList()
+    }
+    val pieces = remember(tiles) { tiles.map { Piece(it.row, it.col, it.bitmap.asImageBitmap()) } }
+    var resetKey by remember(pieces) { mutableIntStateOf(0) }
+    var won by remember(pieces) { mutableStateOf(false) }
+
     // On winning, speak the word again + "You did it!" in all three languages.
     LaunchedEffect(won) {
         if (won) currentPic?.let { pic ->
@@ -132,13 +139,6 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
             )
         }
     }
-
-    val tiles = remember(source, grid) {
-        source?.let { PuzzleLogic.slice(it, grid, grid) } ?: emptyList()
-    }
-    val pieces = remember(tiles) { tiles.map { Piece(it.row, it.col, it.bitmap.asImageBitmap()) } }
-    var resetKey by remember(pieces) { mutableIntStateOf(0) }
-    var won by remember(pieces) { mutableStateOf(false) }
 
     KidBackground {
 
