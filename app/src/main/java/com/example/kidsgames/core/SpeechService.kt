@@ -18,8 +18,8 @@ import java.util.Locale
  */
 class SpeechService(context: Context) {
 
-    /** A word to say plus the language to say it in. */
-    data class Utterance(val text: String, val locale: Locale)
+    /** A word to say, the language, and how fast (1f = normal; lower = clearer/slower). */
+    data class Utterance(val text: String, val locale: Locale, val rate: Float = 0.82f)
 
     private var ready = false
     private val queue = ArrayDeque<Utterance>()
@@ -32,8 +32,7 @@ class SpeechService(context: Context) {
     private val tts: TextToSpeech = TextToSpeech(context.applicationContext) { status ->
         ready = status == TextToSpeech.SUCCESS
         if (ready) {
-            // Slower + slightly higher pitch: clearer for a young, non-native listener.
-            tts.setSpeechRate(0.78f)
+            // Slightly higher pitch is clearer for a young listener; per-utterance rate below.
             tts.setPitch(1.05f)
             tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
@@ -47,8 +46,9 @@ class SpeechService(context: Context) {
         }
     }
 
-    /** Speak a single word in one language. */
-    fun speak(text: String, locale: Locale) = speakSequence(listOf(Utterance(text, locale)))
+    /** Speak a single word in one language, at an optional rate. */
+    fun speak(text: String, locale: Locale, rate: Float = 0.82f) =
+        speakSequence(listOf(Utterance(text, locale, rate)))
 
     /** Speak several words back-to-back, each in its own language. */
     fun speakSequence(items: List<Utterance>) {
@@ -79,6 +79,7 @@ class SpeechService(context: Context) {
             playNext() // language voice not installed — skip to the next one
             return
         }
+        tts.setSpeechRate(item.rate)
         tts.speak(item.text, TextToSpeech.QUEUE_FLUSH, null, "u${item.hashCode()}")
     }
 

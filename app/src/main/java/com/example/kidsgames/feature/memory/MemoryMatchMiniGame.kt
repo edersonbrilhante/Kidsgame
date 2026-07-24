@@ -69,7 +69,7 @@ class MemoryMatchMiniGame : MiniGame {
         fun onTap(card: MCard) {
             if (busy || card.faceUp || card.matched) return
             card.faceUp = true
-            services.speech.sayOne(card.word)
+            services.speech.sayOne(card.word, rate = 1.1f)
             val a = first
             if (a == null) {
                 first = card

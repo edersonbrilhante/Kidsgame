@@ -42,47 +42,6 @@ import com.example.kidsgames.ui.theme.Sunshine
 import com.example.kidsgames.ui.theme.Tangerine
 import java.util.Locale
 
-// One guaranteed word per letter (covers letters the vocabulary may lack, e.g. Q, X, Y).
-private val BASE: List<Pair<Char, Word>> = listOf(
-    'A' to Word("apple", "jabłko", "maçã", "🍎"),
-    'B' to Word("ball", "piłka", "bola", "⚽"),
-    'C' to Word("cat", "kot", "gato", "🐱"),
-    'D' to Word("dog", "pies", "cachorro", "🐶"),
-    'E' to Word("elephant", "słoń", "elefante", "🐘"),
-    'F' to Word("fish", "ryba", "peixe", "🐟"),
-    'G' to Word("grapes", "winogrona", "uvas", "🍇"),
-    'H' to Word("house", "dom", "casa", "🏠"),
-    'I' to Word("ice", "lód", "gelo", "🧊"),
-    'J' to Word("juice", "sok", "suco", "🧃"),
-    'K' to Word("key", "klucz", "chave", "🔑"),
-    'L' to Word("lion", "lew", "leão", "🦁"),
-    'M' to Word("mouse", "mysz", "rato", "🐭"),
-    'N' to Word("nose", "nos", "nariz", "👃"),
-    'O' to Word("orange", "pomarańcza", "laranja", "🍊"),
-    'P' to Word("pig", "świnia", "porco", "🐷"),
-    'Q' to Word("queen", "królowa", "rainha", "👑"),
-    'R' to Word("rabbit", "królik", "coelho", "🐰"),
-    'S' to Word("sun", "słońce", "sol", "☀️"),
-    'T' to Word("tree", "drzewo", "árvore", "🌳"),
-    'U' to Word("umbrella", "parasol", "guarda-chuva", "☂️"),
-    'V' to Word("violin", "skrzypce", "violino", "🎻"),
-    'W' to Word("water", "woda", "água", "💧"),
-    'X' to Word("fox", "lis", "raposa", "🦊"),
-    'Y' to Word("yo-yo", "jo-jo", "ioiô", "🪀"),
-    'Z' to Word("zebra", "zebra", "zebra", "🦓"),
-)
-
-/**
- * For each letter A–Z, a pool of words = the curated base word plus every vocabulary
- * word that starts with that letter. A random one is shown each time the letter is
- * selected (grows automatically as the vocabulary grows).
- */
-private val LETTER_POOL: Map<Char, List<Word>> = ('A'..'Z').associateWith { c ->
-    val base = BASE.filter { it.first == c }.map { it.second }
-    val fromVocab = VOCAB.filter { it.en.firstOrNull()?.uppercaseChar() == c }
-    (base + fromVocab).distinctBy { it.emoji }
-}
-
 private data class Lang(val flag: String, val locale: Locale, val pick: (Word) -> String)
 
 private val LANGS = listOf(
@@ -90,6 +49,18 @@ private val LANGS = listOf(
     Lang("🇵🇱", PL) { it.pl },
     Lang("🇧🇷", PT) { it.pt },
 )
+
+/** The letters that actually have words in the selected language, A–Z order. */
+private fun lettersFor(lang: Lang): List<Char> =
+    VOCAB.mapNotNull { lang.pick(it).firstOrNull()?.uppercaseChar() }
+        .filter { it in 'A'..'Z' }
+        .distinct()
+        .sorted()
+
+/** Words whose name in [lang] starts with [letter]. */
+private fun wordsFor(lang: Lang, letter: Char): List<Word> =
+    VOCAB.filter { lang.pick(it).firstOrNull()?.uppercaseChar() == letter }
+        .distinctBy { it.emoji }
 
 /** Speak the letter then the word, both in the chosen language. */
 private fun speakLetter(services: GameServices, letter: Char, lang: Lang, word: Word) {
@@ -111,18 +82,23 @@ class LettersMiniGame : MiniGame {
 
     @Composable
     override fun Screen(services: GameServices, onExit: () -> Unit) {
-        var i by remember { mutableIntStateOf(0) }
         var langIdx by remember { mutableIntStateOf(0) }
         val lang = LANGS[langIdx]
-        val letter = 'A' + i
-        val pool = LETTER_POOL.getValue(letter)
+        // Alphabet + word pool follow the SELECTED language.
+        val letters = remember(langIdx) { lettersFor(lang) }
+        var pos by remember(langIdx) { mutableIntStateOf(0) }
+        val letter = letters[pos.coerceIn(0, letters.size - 1)]
+        val pool = wordsFor(lang, letter)
         var word by remember { mutableStateOf(pool.random()) }
 
-        // Pick a new random word (and say it in the chosen language) when the letter changes.
-        LaunchedEffect(i) {
-            val w = LETTER_POOL.getValue('A' + i).random()
+        // New random word (spoken in the selected language) when the language or letter changes.
+        LaunchedEffect(langIdx, pos) {
+            val l = LANGS[langIdx]
+            val ls = lettersFor(l)
+            val ltr = ls[pos.coerceIn(0, ls.size - 1)]
+            val w = wordsFor(l, ltr).random()
             word = w
-            speakLetter(services, 'A' + i, LANGS[langIdx], w)
+            speakLetter(services, ltr, l, w)
         }
 
         KidScreen(onExit = onExit, colors = listOf(Color(0xFFFFF0E4), Color(0xFFFFE7EC))) {
@@ -131,14 +107,11 @@ class LettersMiniGame : MiniGame {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                // Choose a language (and tap again to hear the word in it).
+                // Choose the language: alphabet + words follow it.
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     LANGS.forEachIndexed { idx, l ->
                         KidCircleButton(
-                            onClick = {
-                                langIdx = idx
-                                speakLetter(services, letter, l, word)
-                            },
+                            onClick = { langIdx = idx },
                             glyph = l.flag,
                             size = 58,
                             containerColor = if (idx == langIdx) Sunshine else Color.White,
@@ -170,31 +143,68 @@ class LettersMiniGame : MiniGame {
                     }
                 }
 
-                Spacer(Modifier.height(20.dp))
-                Text(word.emoji, fontSize = 88.sp)
-                Spacer(Modifier.height(8.dp))
-                // Word shown in the chosen language.
+                Spacer(Modifier.height(16.dp))
+                Text(word.emoji, fontSize = 80.sp)
+                Spacer(Modifier.height(6.dp))
+                // Word in the selected language.
                 Text(
                     lang.pick(word),
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(10.dp))
+                // The same word in the other languages — tap to hear it.
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    LANGS.filterIndexed { idx, _ -> idx != langIdx }.forEach { l ->
+                        OtherLangChip(l.flag, l.pick(word)) {
+                            services.speech.speak(l.pick(word), l.locale)
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(18.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     KidCircleButton(
-                        onClick = { i = (i - 1 + 26) % 26 },
+                        onClick = { pos = (pos - 1 + letters.size) % letters.size },
                         glyph = "◀",
                         size = 72,
                     )
                     KidCircleButton(
-                        onClick = { i = (i + 1) % 26 },
+                        onClick = { pos = (pos + 1) % letters.size },
                         glyph = "▶",
                         size = 72,
                     )
                 }
             }
+        }
+    }
+}
+
+/** A flag + word chip that speaks the word in that language when tapped. */
+@Composable
+private fun OtherLangChip(flag: String, word: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        color = Color.White,
+        shadowElevation = 3.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(flag, fontSize = 20.sp)
+            Text(
+                word,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 }

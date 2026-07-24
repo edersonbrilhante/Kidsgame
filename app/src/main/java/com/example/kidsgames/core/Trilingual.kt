@@ -2,8 +2,8 @@ package com.example.kidsgames.core
 
 import java.util.Locale
 
-/** The three languages the app teaches. Portuguese defaults to pt-BR. */
-val EN: Locale = Locale.ENGLISH
+/** The three languages the app teaches. English = UK (clearer for learners); PT = pt-BR. */
+val EN: Locale = Locale.UK
 val PL: Locale = Locale("pl")
 val PT: Locale = Locale("pt", "BR")
 
@@ -26,9 +26,9 @@ fun Word.utterances(): List<SpeechService.Utterance> = listOf(
 fun SpeechService.say(word: Word) = speakSequence(word.utterances())
 
 /** Speak a [Word] in just one randomly chosen language (fast, no three-language delay). */
-fun SpeechService.sayOne(word: Word) {
+fun SpeechService.sayOne(word: Word, rate: Float = 0.82f) {
     val (locale, text) = listOf(EN to word.en, PL to word.pl, PT to word.pt).random()
-    speak(text, locale)
+    speak(text, locale, rate)
 }
 
 /** Encouraging phrases spoken after a correct answer or a win. */
