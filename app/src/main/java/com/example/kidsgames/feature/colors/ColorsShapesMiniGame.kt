@@ -25,14 +25,17 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
 import com.example.kidsgames.R
+import com.example.kidsgames.core.EN
+import com.example.kidsgames.core.PL
+import com.example.kidsgames.core.PT
 import com.example.kidsgames.core.Word
-import com.example.kidsgames.core.say
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidScreen
 import com.example.kidsgames.framework.MiniGame
 import com.example.kidsgames.framework.MiniGameInfo
 import com.example.kidsgames.ui.theme.Aqua
 import com.example.kidsgames.ui.theme.Grape
+import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -60,7 +63,18 @@ private val SHAPE_WORDS = mapOf(
 
 private data class Tile(val shape: ShapeKind, val color: Color)
 
-private data class Round(val tiles: List<Tile>, val prompt: Word, val correctIndex: Int)
+private data class Round(
+    val tiles: List<Tile>,
+    val correctIndex: Int,
+    val promptText: String,
+    val promptLocale: Locale,
+)
+
+private fun roundFor(tiles: List<Tile>, target: Int, prompt: Word): Round {
+    // One random language per round (not all three).
+    val (locale, text) = listOf(EN to prompt.en, PL to prompt.pl, PT to prompt.pt).random()
+    return Round(tiles, target, text, locale)
+}
 
 private fun newRound(): Round {
     val byColor = Random.nextBoolean()
@@ -69,12 +83,12 @@ private fun newRound(): Round {
         val shapes = ShapeKind.entries.shuffled()
         val tiles = cols.mapIndexed { idx, c -> Tile(shapes[idx % shapes.size], c.color) }
         val target = (0..3).random()
-        Round(tiles, cols[target].word, target)
+        roundFor(tiles, target, cols[target].word)
     } else {
         val shapes = ShapeKind.entries.shuffled().take(4)
         val tiles = shapes.map { Tile(it, COLORS.random().color) }
         val target = (0..3).random()
-        Round(tiles, SHAPE_WORDS.getValue(shapes[target]), target)
+        roundFor(tiles, target, SHAPE_WORDS.getValue(shapes[target]))
     }
 }
 
@@ -91,7 +105,7 @@ class ColorsShapesMiniGame : MiniGame {
         var round by remember { mutableStateOf(newRound()) }
 
         // Say the first prompt once; later prompts are spoken from onCorrect below.
-        LaunchedEffect(Unit) { services.speech.say(round.prompt) }
+        LaunchedEffect(Unit) { services.speech.speak(round.promptText, round.promptLocale) }
 
         KidScreen(onExit = onExit, colors = listOf(Color(0xFFE6FBFA), Color(0xFFEFE7FF))) {
             Column(
@@ -109,10 +123,10 @@ class ColorsShapesMiniGame : MiniGame {
                                     services.audio.playCorrect()
                                     val next = newRound()
                                     round = next
-                                    services.speech.say(next.prompt)
+                                    services.speech.speak(next.promptText, next.promptLocale)
                                 } else {
-                                    // Gentle retry: say the prompt again.
-                                    services.speech.say(round.prompt)
+                                    // Gentle retry: say the same prompt again (same language).
+                                    services.speech.speak(round.promptText, round.promptLocale)
                                 }
                             }
                         }

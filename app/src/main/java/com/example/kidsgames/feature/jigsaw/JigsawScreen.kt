@@ -86,10 +86,18 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     var grid by remember { mutableIntStateOf(2) }
     LaunchedEffect(savedGrid) { grid = savedGrid }
 
+    // null when a custom photo is loaded (no built-in word to show/say).
+    var pictureId by remember { mutableStateOf<String?>(PuzzleLogic.samples.first().id) }
+
     var source by remember { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(Unit) {
         val latest = services.imageStore.latest()
-        source = latest?.let { services.imageStore.loadBitmap(it) } ?: PuzzleLogic.sample()
+        if (latest != null) {
+            source = services.imageStore.loadBitmap(latest)
+            pictureId = null
+        } else {
+            source = PuzzleLogic.sample()
+        }
     }
 
     val photoPicker = rememberLauncherForActivityResult(
@@ -97,11 +105,13 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     ) { uri ->
         if (uri != null) {
             val file = services.imageStore.importFromUri(uri)
-            if (file != null) source = services.imageStore.loadBitmap(file)
+            if (file != null) {
+                source = services.imageStore.loadBitmap(file)
+                pictureId = null // custom photo: don't announce a built-in word
+            }
         }
     }
     var showGate by remember { mutableStateOf(false) }
-    var pictureId by remember { mutableStateOf(PuzzleLogic.samples.first().id) }
     val currentPic = remember(pictureId) { PuzzleLogic.samples.firstOrNull { it.id == pictureId } }
 
     // Say the picture's name in all three languages whenever it changes (child can't read).
@@ -186,11 +196,12 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
             }
 
             // --- Trilingual word card: tap a flag to hear that language again ---
+            // Stacked vertically so long words (e.g. "guarda-chuva") never break the layout.
             currentPic?.let { pic ->
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     WordChip("🇬🇧", pic.en) { services.speech.speak(pic.en, Locale.ENGLISH) }
                     WordChip("🇵🇱", pic.pl) { services.speech.speak(pic.pl, Locale("pl")) }

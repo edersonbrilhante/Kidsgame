@@ -151,7 +151,16 @@ class LettersMiniGame : MiniGame {
                     color = MaterialTheme.colorScheme.onBackground,
                 )
 
-                Spacer(Modifier.height(28.dp))
+                Spacer(Modifier.height(16.dp))
+
+                // Three language options: tap a flag to hear the word in that language.
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    KidCircleButton(onClick = { services.speech.speak(word.en, EN) }, glyph = "🇬🇧", size = 60)
+                    KidCircleButton(onClick = { services.speech.speak(word.pl, PL) }, glyph = "🇵🇱", size = 60)
+                    KidCircleButton(onClick = { services.speech.speak(word.pt, PT) }, glyph = "🇧🇷", size = 60)
+                }
+
+                Spacer(Modifier.height(24.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     KidCircleButton(
