@@ -33,6 +33,11 @@ class ImageStore(context: Context) {
 
     fun latest(): File? = list().firstOrNull()
 
+    /** Removes all imported images from internal storage. */
+    fun clear() {
+        dir.listFiles()?.forEach { it.delete() }
+    }
+
     /** Decodes a stored image, downsampled so large photos don't blow up memory. */
     fun loadBitmap(file: File, maxDim: Int = 1200): Bitmap? {
         return try {

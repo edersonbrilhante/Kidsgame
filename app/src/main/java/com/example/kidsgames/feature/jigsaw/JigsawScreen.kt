@@ -38,7 +38,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -96,14 +95,9 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     var pictureId by remember { mutableStateOf<String?>(PuzzleLogic.samples.first().id) }
 
     var source by remember { mutableStateOf<Bitmap?>(null) }
+    // Always start on a built-in picture (never a previously imported photo).
     LaunchedEffect(Unit) {
-        val latest = services.imageStore.latest()
-        if (latest != null) {
-            source = services.imageStore.loadBitmap(latest)
-            pictureId = null
-        } else {
-            source = PuzzleLogic.sample(context)
-        }
+        source = PuzzleLogic.sample(context)
     }
 
     val photoPicker = rememberLauncherForActivityResult(
@@ -119,7 +113,8 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     }
     var showGate by remember { mutableStateOf(false) }
     var showGallery by remember { mutableStateOf(false) }
-    val completed = remember { mutableStateListOf<String>() }
+    // Completed pictures persist across app restarts (stored in settings).
+    val completed by services.settings.completedPictures.collectAsState(initial = emptySet())
     val currentPic = remember(pictureId) { PuzzleLogic.samples.firstOrNull { it.id == pictureId } }
 
     // Say the picture's name in all three languages whenever it changes (child can't read).
@@ -142,11 +137,12 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     var resetKey by remember(pieces) { mutableIntStateOf(0) }
     var won by remember(pieces) { mutableStateOf(false) }
 
-    // On winning: mark this picture done, say its word, then walk to the next picture.
+    // On winning: mark this picture done (persisted), say its word, then walk to the next.
     LaunchedEffect(won) {
         if (won) {
+            val wasCustom = pictureId == null
             currentPic?.let { pic ->
-                if (pic.id !in completed) completed.add(pic.id)
+                services.settings.addCompletedPicture(pic.id)
                 services.speech.speakSequence(
                     listOf(
                         SpeechService.Utterance(pic.en, Locale.ENGLISH),
@@ -156,6 +152,8 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
                 )
             }
             delay(1800)
+            // A finished custom photo is removed from cache, not kept.
+            if (wasCustom) services.imageStore.clear()
             val idx = PuzzleLogic.samples.indexOfFirst { it.id == pictureId }
             val nextPic = PuzzleLogic.samples[if (idx < 0) 0 else (idx + 1) % PuzzleLogic.samples.size]
             pictureId = nextPic.id
@@ -399,7 +397,7 @@ private fun WinOverlay() {
 /** Full-screen grid of every picture; completed ones are grayed with a check. */
 @Composable
 private fun PictureGallery(
-    completedIds: List<String>,
+    completedIds: Set<String>,
     selectedId: String?,
     onPick: (SamplePicture) -> Unit,
     onClose: () -> Unit,
