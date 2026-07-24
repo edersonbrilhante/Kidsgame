@@ -26,8 +26,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -61,11 +63,13 @@ import androidx.compose.ui.unit.sp
 import java.util.Locale
 import com.example.kidsgames.core.ParentalGate
 import com.example.kidsgames.core.SpeechService
+import com.example.kidsgames.framework.EmojiIcon
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidBackground
 import com.example.kidsgames.framework.KidButton
 import com.example.kidsgames.framework.KidCircleButton
 import com.example.kidsgames.ui.theme.Sunshine
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -114,6 +118,8 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
         }
     }
     var showGate by remember { mutableStateOf(false) }
+    var showGallery by remember { mutableStateOf(false) }
+    val completed = remember { mutableStateListOf<String>() }
     val currentPic = remember(pictureId) { PuzzleLogic.samples.firstOrNull { it.id == pictureId } }
 
     // Say the picture's name in all three languages whenever it changes (child can't read).
@@ -136,16 +142,24 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     var resetKey by remember(pieces) { mutableIntStateOf(0) }
     var won by remember(pieces) { mutableStateOf(false) }
 
-    // On winning, say the picture's word again in all three languages (no spoken cheer).
+    // On winning: mark this picture done, say its word, then walk to the next picture.
     LaunchedEffect(won) {
-        if (won) currentPic?.let { pic ->
-            services.speech.speakSequence(
-                listOf(
-                    SpeechService.Utterance(pic.en, Locale.ENGLISH),
-                    SpeechService.Utterance(pic.pl, Locale("pl")),
-                    SpeechService.Utterance(pic.pt, Locale("pt", "BR")),
+        if (won) {
+            currentPic?.let { pic ->
+                if (pic.id !in completed) completed.add(pic.id)
+                services.speech.speakSequence(
+                    listOf(
+                        SpeechService.Utterance(pic.en, Locale.ENGLISH),
+                        SpeechService.Utterance(pic.pl, Locale("pl")),
+                        SpeechService.Utterance(pic.pt, Locale("pt", "BR")),
+                    )
                 )
-            )
+            }
+            delay(1800)
+            val idx = PuzzleLogic.samples.indexOfFirst { it.id == pictureId }
+            val nextPic = PuzzleLogic.samples[if (idx < 0) 0 else (idx + 1) % PuzzleLogic.samples.size]
+            pictureId = nextPic.id
+            source = nextPic.draw(context, 900)
         }
     }
 
@@ -173,27 +187,14 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
                         ) { Text("${n}\u00D7$n", style = MaterialTheme.typography.labelLarge) }
                     }
                 }
-                KidCircleButton(onClick = { showGate = true }, glyph = "\uD83D\uDDBC")
-            }
-
-            // --- Picture picker: tap a picture to build it (and hear its name) ---
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
-            ) {
-                items(PuzzleLogic.samples) { pic ->
-                    val selected = pic.id == pictureId
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Open the picture gallery (shows the current picture).
                     KidCircleButton(
-                        onClick = {
-                            pictureId = pic.id
-                            source = pic.draw(context, 900)
-                        },
-                        glyph = pic.emoji,
-                        containerColor = if (selected) Sunshine else Color.White,
-                        size = 50,
+                        onClick = { showGallery = true },
+                        glyph = currentPic?.emoji ?: "\uD83D\uDDBC\uFE0F",
                     )
+                    // Import a photo (behind the parental gate).
+                    KidCircleButton(onClick = { showGate = true }, glyph = "\uD83D\uDCF7")
                 }
             }
 
@@ -313,13 +314,19 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
         }
 
         if (won) {
-            WinOverlay(
-                onAgain = {
-                    pieces.forEach { it.placed = false; it.initialized = false }
-                    resetKey++
-                    won = false
+            WinOverlay()
+        }
+
+        if (showGallery) {
+            PictureGallery(
+                completedIds = completed,
+                selectedId = pictureId,
+                onPick = { pic ->
+                    pictureId = pic.id
+                    source = pic.draw(context, 900)
+                    showGallery = false
                 },
-                onExit = onExit,
+                onClose = { showGallery = false },
             )
         }
     }
@@ -362,7 +369,7 @@ private fun WordChip(flag: String, word: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun WinOverlay(onAgain: () -> Unit, onExit: () -> Unit) {
+private fun WinOverlay() {
     val bounce = rememberInfiniteTransition(label = "winBounce")
     val emojiScale by bounce.animateFloat(
         initialValue = 0.85f,
@@ -385,15 +392,70 @@ private fun WinOverlay(onAgain: () -> Unit, onExit: () -> Unit) {
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.secondary,
             )
-            Row(modifier = Modifier.padding(top = 28.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                KidButton(
-                    onClick = onAgain,
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                ) { Text("Play again", style = MaterialTheme.typography.titleLarge, color = Color.White) }
-                KidButton(
-                    onClick = onExit,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                ) { Text("Games", style = MaterialTheme.typography.titleLarge, color = Color.White) }
+        }
+    }
+}
+
+/** Full-screen grid of every picture; completed ones are grayed with a check. */
+@Composable
+private fun PictureGallery(
+    completedIds: List<String>,
+    selectedId: String?,
+    onPick: (SamplePicture) -> Unit,
+    onClose: () -> Unit,
+) {
+    KidBackground {
+        Column(Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Pick a picture",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                KidCircleButton(onClick = onClose, glyph = "✕")
+            }
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 84.dp),
+                modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 24.dp),
+            ) {
+                items(PuzzleLogic.samples, key = { it.id }) { pic ->
+                    val done = pic.id in completedIds
+                    val selected = pic.id == selectedId
+                    Surface(
+                        onClick = { onPick(pic) },
+                        shape = MaterialTheme.shapes.large,
+                        color = when {
+                            selected -> Sunshine
+                            done -> Color(0xFFE4E4E8)
+                            else -> Color.White
+                        },
+                        shadowElevation = 4.dp,
+                        modifier = Modifier.size(84.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            EmojiIcon(
+                                pic.emoji,
+                                48.dp,
+                                modifier = Modifier.alpha(if (done && !selected) 0.4f else 1f),
+                            )
+                            if (done) {
+                                Text(
+                                    "✓",
+                                    fontSize = 18.sp,
+                                    color = Color(0xFF2E7D46),
+                                    modifier = Modifier.align(Alignment.TopEnd).padding(4.dp),
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
