@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.kidsgames"
+    namespace = "com.example.matteogames"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.kidsgames"
+        applicationId = "com.example.matteogames"
         minSdk = 26
         targetSdk = 35
         // CI passes VERSION_CODE (the run number) so each build is an upgrade; 1 locally.

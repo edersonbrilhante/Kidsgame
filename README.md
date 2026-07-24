@@ -68,7 +68,7 @@ number, so each new release **installs over the previous one** (upgrade in place
 1. Download the latest APK from the repo's **Releases** page.
 2. Tap it; allow "install unknown apps" from that source.
 3. **First install only:** if an older, differently-signed build is present, uninstall it once
-   (`adb uninstall com.example.kidsgames` or long-press → Uninstall). From then on, updates
+   (`adb uninstall com.example.matteogames` or long-press → Uninstall). From then on, updates
    install in place.
 
 Sideloaded apps trigger a Play Protect prompt — tap **More details → Install anyway**. Removing
@@ -102,7 +102,7 @@ It appears on the home carousel automatically and gets `services.audio`, `servic
 
 ## Project layout
 ```
-app/src/main/java/com/example/kidsgames/
+app/src/main/java/com/example/matteogames/
   MainActivity.kt
   framework/   MiniGame, MiniGameInfo, MiniGameRegistry, GameServices, HomeScreen, AppRoot, KidUi
   core/        AudioService, SpeechService (EN/PL/PT TTS), Trilingual, ImageStore,
