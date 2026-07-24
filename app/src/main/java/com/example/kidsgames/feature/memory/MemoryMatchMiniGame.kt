@@ -27,6 +27,7 @@ import com.example.kidsgames.R
 import com.example.kidsgames.core.Word
 import com.example.kidsgames.core.sayOne
 import com.example.kidsgames.feature.jigsaw.PuzzleLogic
+import com.example.kidsgames.framework.EmojiIcon
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidButton
 import com.example.kidsgames.framework.KidScreen
@@ -147,7 +148,11 @@ private fun MemoryCard(card: MCard, sizeDp: Int, onClick: () -> Unit) {
         modifier = Modifier.size(sizeDp.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(if (revealed) card.emoji else "❓", fontSize = (sizeDp * 0.48f).sp)
+            if (revealed) {
+                EmojiIcon(card.emoji, (sizeDp * 0.6f).dp)
+            } else {
+                Text("❓", fontSize = (sizeDp * 0.48f).sp)
+            }
         }
     }
 }

@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -80,6 +81,7 @@ private class Piece(val row: Int, val col: Int, val image: ImageBitmap) {
 @Composable
 fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     val density = LocalDensity.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     val savedGrid by services.settings.gridSize.collectAsState(initial = 2)
@@ -96,7 +98,7 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
             source = services.imageStore.loadBitmap(latest)
             pictureId = null
         } else {
-            source = PuzzleLogic.sample()
+            source = PuzzleLogic.sample(context)
         }
     }
 
@@ -186,7 +188,7 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
                     KidCircleButton(
                         onClick = {
                             pictureId = pic.id
-                            source = pic.draw(900)
+                            source = pic.draw(context, 900)
                         },
                         glyph = pic.emoji,
                         containerColor = if (selected) Sunshine else Color.White,

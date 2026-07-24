@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kidsgames.R
+import com.example.kidsgames.framework.EmojiIcon
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidCircleButton
 import com.example.kidsgames.framework.KidBackground
@@ -94,7 +95,7 @@ class TapBalloonMiniGame : MiniGame {
                         },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(glyph, fontSize = 64.sp)
+                    EmojiIcon(glyph, 72.dp)
                 }
             }
             KidCircleButton(

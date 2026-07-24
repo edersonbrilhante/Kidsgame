@@ -9,3 +9,6 @@
 .externalNativeBuild
 .cxx
 out/
+
+# Twemoji images are downloaded at build time, not committed
+app/src/main/assets/twemoji/

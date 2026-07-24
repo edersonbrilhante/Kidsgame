@@ -73,6 +73,14 @@ fun HomeScreen(onSelect: (String) -> Unit) {
                     GameCard(game.info) { onSelect(game.info.id) }
                 }
             }
+
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = "Emoji: Twemoji · CC-BY 4.0",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
         }
     }
 }
@@ -112,7 +120,7 @@ private fun GameCard(info: MiniGameInfo, onClick: () -> Unit) {
                     contentAlignment = Alignment.Center,
                 ) {
                     if (info.emoji != null) {
-                        Text(info.emoji, fontSize = 64.sp)
+                        EmojiIcon(info.emoji, 72.dp)
                     } else if (info.iconRes != 0) {
                         Image(
                             painter = painterResource(info.iconRes),

@@ -32,6 +32,7 @@ import com.example.kidsgames.core.PT
 import com.example.kidsgames.core.SpeechService
 import com.example.kidsgames.core.Word
 import com.example.kidsgames.feature.jigsaw.VOCAB
+import com.example.kidsgames.framework.EmojiIcon
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidCircleButton
 import com.example.kidsgames.framework.KidScreen
@@ -144,7 +145,7 @@ class LettersMiniGame : MiniGame {
                 }
 
                 Spacer(Modifier.height(16.dp))
-                Text(word.emoji, fontSize = 80.sp)
+                EmojiIcon(word.emoji, 84.dp)
                 Spacer(Modifier.height(6.dp))
                 // Word in the selected language.
                 Text(

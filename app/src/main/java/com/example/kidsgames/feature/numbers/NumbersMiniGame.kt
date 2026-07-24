@@ -30,6 +30,7 @@ import com.example.kidsgames.core.PL
 import com.example.kidsgames.core.PT
 import com.example.kidsgames.core.Word
 import com.example.kidsgames.core.say
+import com.example.kidsgames.framework.EmojiIcon
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidCircleButton
 import com.example.kidsgames.framework.KidScreen
@@ -105,7 +106,7 @@ class NumbersMiniGame : MiniGame {
                 ) {
                     (1..n).toList().chunked(5).forEach { rowItems ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            rowItems.forEach { _ -> Text(emoji, fontSize = 40.sp) }
+                            rowItems.forEach { _ -> EmojiIcon(emoji, 40.dp) }
                         }
                     }
                 }

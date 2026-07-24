@@ -48,6 +48,9 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Fetch Twemoji icons
+        run: python3 scripts/fetch_twemoji.py
+
       - name: Build debug APK
         env:
           VERSION_CODE: ${{ github.run_number }}

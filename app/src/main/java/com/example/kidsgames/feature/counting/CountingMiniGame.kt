@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.kidsgames.R
 import com.example.kidsgames.core.Word
 import com.example.kidsgames.core.sayOne
+import com.example.kidsgames.framework.EmojiIcon
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidScreen
 import com.example.kidsgames.framework.MiniGame
@@ -88,7 +89,7 @@ class CountingMiniGame : MiniGame {
                 ) {
                     (1..round.n).toList().chunked(3).forEach { rowItems ->
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            rowItems.forEach { _ -> Text(round.emoji, fontSize = 52.sp) }
+                            rowItems.forEach { _ -> EmojiIcon(round.emoji, 52.dp) }
                         }
                     }
                 }

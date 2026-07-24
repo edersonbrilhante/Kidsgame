@@ -27,6 +27,7 @@ import com.example.kidsgames.core.PL
 import com.example.kidsgames.core.PT
 import com.example.kidsgames.feature.jigsaw.PuzzleLogic
 import com.example.kidsgames.feature.jigsaw.SamplePicture
+import com.example.kidsgames.framework.EmojiIcon
 import com.example.kidsgames.framework.GameServices
 import com.example.kidsgames.framework.KidScreen
 import com.example.kidsgames.framework.MiniGame
@@ -118,7 +119,7 @@ private fun PictureTile(emoji: String, sizeDp: Int, onClick: () -> Unit) {
         modifier = Modifier.size(sizeDp.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(emoji, fontSize = 72.sp)
+            EmojiIcon(emoji, (sizeDp * 0.62f).dp)
         }
     }
 }

@@ -1,9 +1,12 @@
 package com.example.kidsgames.feature.jigsaw
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
+import com.example.kidsgames.framework.loadTwemoji
 
 data class Tile(val row: Int, val col: Int, val bitmap: Bitmap)
 
@@ -18,7 +21,7 @@ data class SamplePicture(
     val en: String,
     val pl: String,
     val pt: String,
-    val draw: (Int) -> Bitmap,
+    val draw: (Context, Int) -> Bitmap,
 )
 
 object PuzzleLogic {
@@ -66,15 +69,18 @@ object PuzzleLogic {
             en = w.en,
             pl = w.pl,
             pt = w.pt,
-            draw = { size -> emojiPicture(w.emoji, bg, size) },
+            draw = { ctx, size -> emojiPicture(ctx, w.emoji, bg, size) },
         )
     }
 
     /** Default picture so the game is playable before importing a photo. */
-    fun sample(size: Int = 900): Bitmap = samples.first().draw(size)
+    fun sample(context: Context, size: Int = 900): Bitmap = samples.first().draw(context, size)
 
-    /** Renders a big color emoji centered on a colored background as a puzzle picture. */
-    fun emojiPicture(emoji: String, bg: Int, size: Int = 900): Bitmap {
+    /**
+     * Renders a puzzle picture: a colored background with the word's picture on top —
+     * the bundled Twemoji image when available, otherwise the system emoji glyph.
+     */
+    fun emojiPicture(context: Context, emoji: String, bg: Int, size: Int = 900): Bitmap {
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -84,12 +90,20 @@ object PuzzleLogic {
         p.color = Color.argb(70, 255, 255, 255)
         canvas.drawCircle(s / 2f, s / 2f, s * 0.42f, p)
 
-        val tp = Paint(Paint.ANTI_ALIAS_FLAG)
-        tp.textAlign = Paint.Align.CENTER
-        tp.textSize = s * 0.6f
-        val fm = tp.fontMetrics
-        val baseline = s / 2f - (fm.ascent + fm.descent) / 2f
-        canvas.drawText(emoji, s / 2f, baseline, tp)
+        val tw = loadTwemoji(context, emoji)
+        if (tw != null) {
+            val target = s * 0.66f
+            val left = (s - target) / 2f
+            val dst = RectF(left, left, left + target, left + target)
+            canvas.drawBitmap(tw, null, dst, Paint(Paint.FILTER_BITMAP_FLAG))
+        } else {
+            val tp = Paint(Paint.ANTI_ALIAS_FLAG)
+            tp.textAlign = Paint.Align.CENTER
+            tp.textSize = s * 0.6f
+            val fm = tp.fontMetrics
+            val baseline = s / 2f - (fm.ascent + fm.descent) / 2f
+            canvas.drawText(emoji, s / 2f, baseline, tp)
+        }
         return bmp
     }
 }
