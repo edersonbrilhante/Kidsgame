@@ -68,7 +68,9 @@ jobs:
         run: |
           TAG="v1.0.${{ github.run_number }}"
           cp apk/MatteoGames.apk "MatteoGames-${TAG}.apk"
-          gh release create "$TAG" "MatteoGames-${TAG}.apk" \
+          # Upload a versioned asset + a fixed-name one, so a permanent "latest" URL works:
+          #   https://github.com/OWNER/REPO/releases/latest/download/MatteoGames.apk
+          gh release create "$TAG" "MatteoGames-${TAG}.apk" "apk/MatteoGames.apk" \
             --repo "${{ github.repository }}" \
             --title "Matteo Games ${TAG}" \
             --notes "Automated build from commit ${{ github.sha }}." \
