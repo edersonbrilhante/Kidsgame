@@ -25,6 +25,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kidsgames.R
+import com.example.kidsgames.core.EN
+import com.example.kidsgames.core.PL
+import com.example.kidsgames.core.PT
 import com.example.kidsgames.core.Word
 import com.example.kidsgames.core.say
 import com.example.kidsgames.framework.GameServices
@@ -60,9 +63,12 @@ class NumbersMiniGame : MiniGame {
     override fun Screen(services: GameServices, onExit: () -> Unit) {
         var n by remember { mutableIntStateOf(1) }
         val objects = remember { listOf("⚽", "⚡", "🐶", "⭐", "🍎") }
+        val speaking by services.speech.speaking
+
+        val word = NUMBERS[n - 1]
 
         // Count it out loud in all three languages whenever the number changes.
-        LaunchedEffect(n) { services.speech.say(NUMBERS[n - 1]) }
+        LaunchedEffect(n) { services.speech.say(word) }
 
         KidScreen(onExit = onExit, colors = listOf(Color(0xFFEDE7FF), Color(0xFFEAF2FF))) {
             Column(
@@ -72,7 +78,7 @@ class NumbersMiniGame : MiniGame {
             ) {
                 // Big number — tap to hear it again.
                 Surface(
-                    onClick = { services.speech.say(NUMBERS[n - 1]) },
+                    onClick = { services.speech.say(word) },
                     shape = MaterialTheme.shapes.extraLarge,
                     color = Color.White,
                     shadowElevation = 8.dp,
@@ -88,7 +94,7 @@ class NumbersMiniGame : MiniGame {
                     }
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(20.dp))
 
                 // That many objects, arranged in rows of five.
                 val emoji = objects[(n - 1) % objects.size]
@@ -103,11 +109,31 @@ class NumbersMiniGame : MiniGame {
                     }
                 }
 
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(20.dp))
 
+                // Hear the number in a single language.
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    KidCircleButton(onClick = { services.speech.speak(word.en, EN) }, glyph = "🇬🇧", size = 56)
+                    KidCircleButton(onClick = { services.speech.speak(word.pl, PL) }, glyph = "🇵🇱", size = 56)
+                    KidCircleButton(onClick = { services.speech.speak(word.pt, PT) }, glyph = "🇧🇷", size = 56)
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // Arrows wait until the audio has finished before moving on.
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    KidCircleButton(onClick = { if (n > 1) n-- }, glyph = "◀", size = 72)
-                    KidCircleButton(onClick = { if (n < 10) n++ }, glyph = "▶", size = 72)
+                    KidCircleButton(
+                        onClick = { if (!speaking && n > 1) n-- },
+                        glyph = "◀",
+                        size = 72,
+                        containerColor = if (speaking) Color(0xFFE3E0EC) else Color.White,
+                    )
+                    KidCircleButton(
+                        onClick = { if (!speaking && n < 10) n++ },
+                        glyph = "▶",
+                        size = 72,
+                        containerColor = if (speaking) Color(0xFFE3E0EC) else Color.White,
+                    )
                 }
             }
         }

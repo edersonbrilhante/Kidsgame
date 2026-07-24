@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +33,8 @@ import com.example.kidsgames.framework.MiniGame
 import com.example.kidsgames.framework.MiniGameInfo
 import com.example.kidsgames.ui.theme.Grass
 import com.example.kidsgames.ui.theme.Sunshine
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val NUMBER_WORDS = listOf(
     Word("one", "jeden", "um"),
@@ -62,6 +65,8 @@ class CountingMiniGame : MiniGame {
     @Composable
     override fun Screen(services: GameServices, onExit: () -> Unit) {
         var round by remember { mutableStateOf(newRound()) }
+        var busy by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
 
         KidScreen(onExit = onExit, colors = listOf(Color(0xFFFFF6DE), Color(0xFFE9F7E6))) {
             Column(
@@ -95,10 +100,16 @@ class CountingMiniGame : MiniGame {
                     round.choices.forEach { choice ->
                         Surface(
                             onClick = {
-                                if (choice == round.n) {
+                                if (!busy && choice == round.n) {
+                                    busy = true
                                     services.audio.playCorrect()
                                     services.speech.sayOne(NUMBER_WORDS[round.n - 1])
-                                    round = newRound()
+                                    // Pause so the child hears the number before the next page.
+                                    scope.launch {
+                                        delay(1400)
+                                        round = newRound()
+                                        busy = false
+                                    }
                                 }
                             },
                             shape = MaterialTheme.shapes.extraLarge,

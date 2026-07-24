@@ -38,6 +38,7 @@ import com.example.kidsgames.framework.KidScreen
 import com.example.kidsgames.framework.MiniGame
 import com.example.kidsgames.framework.MiniGameInfo
 import com.example.kidsgames.ui.theme.Coral
+import com.example.kidsgames.ui.theme.Sunshine
 import com.example.kidsgames.ui.theme.Tangerine
 
 // One guaranteed word per letter (covers letters the vocabulary may lack, e.g. Q, X, Y).
@@ -81,13 +82,20 @@ private val LETTER_POOL: Map<Char, List<Word>> = ('A'..'Z').associateWith { c ->
     (base + fromVocab).distinctBy { it.emoji }
 }
 
-private fun speakLetter(services: GameServices, letter: Char, word: Word) {
+private data class Lang(val flag: String, val locale: Locale, val pick: (Word) -> String)
+
+private val LANGS = listOf(
+    Lang("🇬🇧", EN) { it.en },
+    Lang("🇵🇱", PL) { it.pl },
+    Lang("🇧🇷", PT) { it.pt },
+)
+
+/** Speak the letter then the word, both in the chosen language. */
+private fun speakLetter(services: GameServices, letter: Char, lang: Lang, word: Word) {
     services.speech.speakSequence(
         listOf(
-            SpeechService.Utterance(letter.toString(), EN),
-            SpeechService.Utterance(word.en, EN),
-            SpeechService.Utterance(word.pl, PL),
-            SpeechService.Utterance(word.pt, PT),
+            SpeechService.Utterance(letter.toString(), lang.locale),
+            SpeechService.Utterance(lang.pick(word), lang.locale),
         )
     )
 }
@@ -103,15 +111,17 @@ class LettersMiniGame : MiniGame {
     @Composable
     override fun Screen(services: GameServices, onExit: () -> Unit) {
         var i by remember { mutableIntStateOf(0) }
+        var langIdx by remember { mutableIntStateOf(0) }
+        val lang = LANGS[langIdx]
         val letter = 'A' + i
         val pool = LETTER_POOL.getValue(letter)
         var word by remember { mutableStateOf(pool.random()) }
 
-        // Pick a new random word (and say it) whenever the letter changes.
+        // Pick a new random word (and say it in the chosen language) when the letter changes.
         LaunchedEffect(i) {
             val w = LETTER_POOL.getValue('A' + i).random()
             word = w
-            speakLetter(services, 'A' + i, w)
+            speakLetter(services, 'A' + i, LANGS[langIdx], w)
         }
 
         KidScreen(onExit = onExit, colors = listOf(Color(0xFFFFF0E4), Color(0xFFFFE7EC))) {
@@ -120,12 +130,29 @@ class LettersMiniGame : MiniGame {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
+                // Choose a language (and tap again to hear the word in it).
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    LANGS.forEachIndexed { idx, l ->
+                        KidCircleButton(
+                            onClick = {
+                                langIdx = idx
+                                speakLetter(services, letter, l, word)
+                            },
+                            glyph = l.flag,
+                            size = 58,
+                            containerColor = if (idx == langIdx) Sunshine else Color.White,
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(18.dp))
+
                 // Big letter — tap for another random word starting with this letter.
                 Surface(
                     onClick = {
                         val w = pool.random()
                         word = w
-                        speakLetter(services, letter, w)
+                        speakLetter(services, letter, lang, w)
                     },
                     shape = MaterialTheme.shapes.extraLarge,
                     color = Color.White,
@@ -145,20 +172,12 @@ class LettersMiniGame : MiniGame {
                 Spacer(Modifier.height(20.dp))
                 Text(word.emoji, fontSize = 88.sp)
                 Spacer(Modifier.height(8.dp))
+                // Word shown in the chosen language.
                 Text(
-                    word.en,
+                    lang.pick(word),
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
-
-                Spacer(Modifier.height(16.dp))
-
-                // Three language options: tap a flag to hear the word in that language.
-                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    KidCircleButton(onClick = { services.speech.speak(word.en, EN) }, glyph = "🇬🇧", size = 60)
-                    KidCircleButton(onClick = { services.speech.speak(word.pl, PL) }, glyph = "🇵🇱", size = 60)
-                    KidCircleButton(onClick = { services.speech.speak(word.pt, PT) }, glyph = "🇧🇷", size = 60)
-                }
 
                 Spacer(Modifier.height(24.dp))
 
