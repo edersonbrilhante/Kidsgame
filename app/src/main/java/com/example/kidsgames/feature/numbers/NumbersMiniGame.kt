@@ -67,8 +67,9 @@ class NumbersMiniGame : MiniGame {
 
         val word = NUMBERS[n - 1]
 
-        // Count it out loud in all three languages whenever the number changes.
-        LaunchedEffect(n) { services.speech.say(word) }
+        // Count the first number out loud; later numbers are spoken from the arrows,
+        // synchronously, so navigation is blocked until that audio finishes.
+        LaunchedEffect(Unit) { services.speech.say(NUMBERS[n - 1]) }
 
         KidScreen(onExit = onExit, colors = listOf(Color(0xFFEDE7FF), Color(0xFFEAF2FF))) {
             Column(
@@ -123,13 +124,13 @@ class NumbersMiniGame : MiniGame {
                 // Arrows wait until the audio has finished before moving on.
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     KidCircleButton(
-                        onClick = { if (!speaking && n > 1) n-- },
+                        onClick = { if (!speaking && n > 1) { n--; services.speech.say(NUMBERS[n - 1]) } },
                         glyph = "◀",
                         size = 72,
                         containerColor = if (speaking) Color(0xFFE3E0EC) else Color.White,
                     )
                     KidCircleButton(
-                        onClick = { if (!speaking && n < 10) n++ },
+                        onClick = { if (!speaking && n < 10) { n++; services.speech.say(NUMBERS[n - 1]) } },
                         glyph = "▶",
                         size = 72,
                         containerColor = if (speaking) Color(0xFFE3E0EC) else Color.White,
