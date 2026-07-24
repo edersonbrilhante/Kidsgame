@@ -40,6 +40,7 @@ import com.example.kidsgames.framework.MiniGameInfo
 import com.example.kidsgames.ui.theme.Coral
 import com.example.kidsgames.ui.theme.Sunshine
 import com.example.kidsgames.ui.theme.Tangerine
+import java.util.Locale
 
 // One guaranteed word per letter (covers letters the vocabulary may lack, e.g. Q, X, Y).
 private val BASE: List<Pair<Char, Word>> = listOf(
