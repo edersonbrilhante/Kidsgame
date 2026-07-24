@@ -8,8 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -19,23 +17,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-
-      # Create a stable signing keystore once and commit it, so every build shares the
-      # same signature (required for in-place upgrades). Reused on later runs.
-      - name: Ensure signing keystore
-        run: |
-          if [ ! -f app/matteo-debug.keystore ]; then
-            keytool -genkeypair -v \
-              -keystore app/matteo-debug.keystore \
-              -storepass matteo123 -keypass matteo123 -alias matteo \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=Matteo Games, O=Matteo, C=PL"
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add -f app/matteo-debug.keystore
-            git commit -m "Add stable signing keystore [skip ci]"
-            git push origin "HEAD:${{ github.ref_name }}"
-          fi
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
