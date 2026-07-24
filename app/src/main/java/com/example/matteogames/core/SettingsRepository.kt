@@ -44,6 +44,12 @@ class SettingsRepository(context: Context) {
         appContext.dataStore.edit { it[KEY_JIGSAW] = id }
     }
 
+    /** Which pieces ("row,col") are already placed on the current puzzle. */
+    val puzzlePlaced: Flow<Set<String>> = appContext.dataStore.data.map { it[KEY_PLACED] ?: emptySet() }
+    suspend fun setPuzzlePlaced(cells: Set<String>) {
+        appContext.dataStore.edit { it[KEY_PLACED] = cells }
+    }
+
     val numbersCurrent: Flow<Int> = appContext.dataStore.data.map { it[KEY_NUMBERS] ?: 1 }
     suspend fun setNumbersCurrent(n: Int) {
         appContext.dataStore.edit { it[KEY_NUMBERS] = n }
@@ -60,6 +66,7 @@ class SettingsRepository(context: Context) {
         private val KEY_GRID = intPreferencesKey("grid_size")
         private val KEY_COMPLETED = stringSetPreferencesKey("completed_pictures")
         private val KEY_JIGSAW = stringPreferencesKey("jigsaw_picture")
+        private val KEY_PLACED = stringSetPreferencesKey("puzzle_placed")
         private val KEY_NUMBERS = intPreferencesKey("numbers_current")
         private val KEY_LETTERS_LANG = intPreferencesKey("letters_lang")
         private val KEY_LETTERS_POS = intPreferencesKey("letters_pos")

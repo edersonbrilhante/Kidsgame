@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +39,12 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun HomeScreen(onSelect: (String) -> Unit) {
+    val context = LocalContext.current
+    val version = remember {
+        runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull() ?: "?"
+    }
     KidBackground {
         Column(
             modifier = Modifier
@@ -76,7 +83,7 @@ fun HomeScreen(onSelect: (String) -> Unit) {
 
             Spacer(Modifier.weight(1f))
             Text(
-                text = "Emoji: Twemoji · CC-BY 4.0",
+                text = "Matteo Games  v$version  ·  Emoji: Twemoji CC-BY 4.0",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                 modifier = Modifier.padding(bottom = 12.dp),

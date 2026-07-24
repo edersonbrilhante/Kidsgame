@@ -94,12 +94,15 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
 
     // null when a custom photo is loaded (no built-in word to show/say).
     var pictureId by remember { mutableStateOf<String?>(null) }
+    // Placed pieces ("row,col") to restore onto the next-built board; consumed once applied.
+    var pendingPlaced by remember { mutableStateOf<Set<String>?>(null) }
 
     var source by remember { mutableStateOf<Bitmap?>(null) }
-    // Resume on the last picture (never a previously imported photo); default to the first.
+    // Resume on the last picture with its placed pieces (never a previously imported photo).
     LaunchedEffect(Unit) {
         val savedId = services.settings.jigsawPicture.first()
         val pic = PuzzleLogic.samples.firstOrNull { it.id == savedId } ?: PuzzleLogic.samples.first()
+        pendingPlaced = services.settings.puzzlePlaced.first()
         pictureId = pic.id
         source = pic.draw(context, 900)
     }
@@ -112,6 +115,7 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
             if (file != null) {
                 source = services.imageStore.loadBitmap(file)
                 pictureId = null // custom photo: don't announce a built-in word
+                scope.launch { services.settings.setPuzzlePlaced(emptySet()) }
             }
         }
     }
@@ -160,6 +164,7 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
             delay(1800)
             // A finished custom photo is removed from cache, not kept.
             if (wasCustom) services.imageStore.clear()
+            services.settings.setPuzzlePlaced(emptySet()) // next picture starts fresh
             val idx = PuzzleLogic.samples.indexOfFirst { it.id == pictureId }
             val nextPic = PuzzleLogic.samples[if (idx < 0) 0 else (idx + 1) % PuzzleLogic.samples.size]
             pictureId = nextPic.id
@@ -183,7 +188,10 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
                         KidButton(
                             onClick = {
                                 grid = n
-                                scope.launch { services.settings.setGridSize(n) }
+                                scope.launch {
+                                    services.settings.setGridSize(n)
+                                    services.settings.setPuzzlePlaced(emptySet())
+                                }
                             },
                             containerColor = if (selected) Sunshine else Color.White,
                             contentColor = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
@@ -227,21 +235,28 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
                 val cellDp = with(density) { cell.toDp() }
                 val boardDp = with(density) { boardSize.toDp() }
 
-                // Scatter unplaced pieces into the tray below the board.
+                // Restore already-placed pieces to their slots; scatter the rest into the tray.
                 LaunchedEffect(pieces, wpx, hpx, resetKey) {
                     if (wpx > 0f && hpx > 0f) {
+                        val restore = pendingPlaced
                         val rnd = Random(42)
                         val trayTop = boardTop + boardSize + cell * 0.3f
                         val trayBottom = (hpx - cell * 1.1f).coerceAtLeast(trayTop)
                         pieces.forEach { pc ->
                             if (!pc.initialized) {
-                                val px = (rnd.nextFloat() * (wpx - cell)).coerceIn(0f, (wpx - cell).coerceAtLeast(0f))
-                                val py = (trayTop + rnd.nextFloat() * (trayBottom - trayTop))
-                                    .coerceIn(trayTop, trayBottom)
-                                pc.pos = Offset(px, py)
+                                if (restore != null && "${pc.row},${pc.col}" in restore) {
+                                    pc.pos = Offset(boardLeft + pc.col * cell, boardTop + pc.row * cell)
+                                    pc.placed = true
+                                } else {
+                                    val px = (rnd.nextFloat() * (wpx - cell)).coerceIn(0f, (wpx - cell).coerceAtLeast(0f))
+                                    val py = (trayTop + rnd.nextFloat() * (trayBottom - trayTop))
+                                        .coerceIn(trayTop, trayBottom)
+                                    pc.pos = Offset(px, py)
+                                }
                                 pc.initialized = true
                             }
                         }
+                        pendingPlaced = null // apply only to the first board built after resume
                     }
                 }
 
@@ -294,6 +309,10 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
                                         pc.pos = Offset(boardLeft + pc.col * cell, boardTop + pc.row * cell)
                                         pc.placed = true
                                         services.audio.playCorrect()
+                                        // Remember progress so a half-done puzzle isn't reset.
+                                        val placedCells = pieces.filter { it.placed }
+                                            .map { "${it.row},${it.col}" }.toSet()
+                                        scope.launch { services.settings.setPuzzlePlaced(placedCells) }
                                         if (pieces.all { it.placed }) {
                                             won = true
                                             services.celebrate()
@@ -328,6 +347,7 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
                 onPick = { pic ->
                     pictureId = pic.id
                     source = pic.draw(context, 900)
+                    scope.launch { services.settings.setPuzzlePlaced(emptySet()) }
                     showGallery = false
                 },
                 onClose = { showGallery = false },
