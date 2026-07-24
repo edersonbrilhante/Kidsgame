@@ -69,6 +69,7 @@ import com.example.matteogames.framework.KidButton
 import com.example.matteogames.framework.KidCircleButton
 import com.example.matteogames.ui.theme.Sunshine
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -92,12 +93,15 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     LaunchedEffect(savedGrid) { grid = savedGrid }
 
     // null when a custom photo is loaded (no built-in word to show/say).
-    var pictureId by remember { mutableStateOf<String?>(PuzzleLogic.samples.first().id) }
+    var pictureId by remember { mutableStateOf<String?>(null) }
 
     var source by remember { mutableStateOf<Bitmap?>(null) }
-    // Always start on a built-in picture (never a previously imported photo).
+    // Resume on the last picture (never a previously imported photo); default to the first.
     LaunchedEffect(Unit) {
-        source = PuzzleLogic.sample(context)
+        val savedId = services.settings.jigsawPicture.first()
+        val pic = PuzzleLogic.samples.firstOrNull { it.id == savedId } ?: PuzzleLogic.samples.first()
+        pictureId = pic.id
+        source = pic.draw(context, 900)
     }
 
     val photoPicker = rememberLauncherForActivityResult(
@@ -117,8 +121,10 @@ fun JigsawScreen(services: GameServices, onExit: () -> Unit) {
     val completed by services.settings.completedPictures.collectAsState(initial = emptySet())
     val currentPic = remember(pictureId) { PuzzleLogic.samples.firstOrNull { it.id == pictureId } }
 
-    // Say the picture's name in all three languages whenever it changes (child can't read).
+    // Say the picture's name in all three languages whenever it changes (child can't read),
+    // and remember it so the puzzle resumes here next time.
     LaunchedEffect(pictureId) {
+        pictureId?.let { services.settings.setJigsawPicture(it) }
         currentPic?.let { pic ->
             services.speech.speakSequence(
                 listOf(

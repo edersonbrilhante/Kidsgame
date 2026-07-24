@@ -42,6 +42,7 @@ import com.example.matteogames.ui.theme.Coral
 import com.example.matteogames.ui.theme.Sunshine
 import com.example.matteogames.ui.theme.Tangerine
 import java.util.Locale
+import kotlinx.coroutines.flow.first
 
 private data class Lang(val flag: String, val locale: Locale, val pick: (Word) -> String)
 
@@ -84,16 +85,29 @@ class LettersMiniGame : MiniGame {
     @Composable
     override fun Screen(services: GameServices, onExit: () -> Unit) {
         var langIdx by remember { mutableIntStateOf(0) }
+        var pos by remember { mutableIntStateOf(0) }
+        var restored by remember { mutableStateOf(false) }
+
+        // Resume the last language + letter (one-time read).
+        LaunchedEffect(Unit) {
+            langIdx = services.settings.lettersLang.first().coerceIn(0, LANGS.size - 1)
+            val ls = lettersFor(LANGS[langIdx])
+            pos = services.settings.lettersPos.first().coerceIn(0, (ls.size - 1).coerceAtLeast(0))
+            restored = true
+        }
+
         val lang = LANGS[langIdx]
         // Alphabet + word pool follow the SELECTED language.
         val letters = remember(langIdx) { lettersFor(lang) }
-        var pos by remember(langIdx) { mutableIntStateOf(0) }
         val letter = letters[pos.coerceIn(0, letters.size - 1)]
         val pool = wordsFor(lang, letter)
         var word by remember { mutableStateOf(pool.random()) }
 
-        // New random word (spoken in the selected language) when the language or letter changes.
-        LaunchedEffect(langIdx, pos) {
+        // After resume, pick a random word (spoken in the selected language) when the
+        // language or letter changes; also remember the position for next time.
+        LaunchedEffect(langIdx, pos, restored) {
+            if (!restored) return@LaunchedEffect
+            services.settings.setLetters(langIdx, pos)
             val l = LANGS[langIdx]
             val ls = lettersFor(l)
             val ltr = ls[pos.coerceIn(0, ls.size - 1)]
@@ -112,7 +126,7 @@ class LettersMiniGame : MiniGame {
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     LANGS.forEachIndexed { idx, l ->
                         KidCircleButton(
-                            onClick = { langIdx = idx },
+                            onClick = { langIdx = idx; pos = 0 },
                             glyph = l.flag,
                             size = 58,
                             containerColor = if (idx == langIdx) Sunshine else Color.White,

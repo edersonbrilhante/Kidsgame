@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +39,8 @@ import com.example.matteogames.framework.MiniGame
 import com.example.matteogames.framework.MiniGameInfo
 import com.example.matteogames.ui.theme.Grape
 import com.example.matteogames.ui.theme.SkyBlue
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 private val NUMBERS = listOf(
     Word("one", "jeden", "um"),
@@ -65,12 +68,15 @@ class NumbersMiniGame : MiniGame {
         var n by remember { mutableIntStateOf(1) }
         val objects = remember { listOf("⚽", "⚡", "🐶", "⭐", "🍎") }
         val speaking by services.speech.speaking
+        val scope = rememberCoroutineScope()
+
+        // Resume on the last number (one-time read), then count it out loud once.
+        LaunchedEffect(Unit) {
+            n = services.settings.numbersCurrent.first().coerceIn(1, 10)
+            services.speech.say(NUMBERS[n - 1])
+        }
 
         val word = NUMBERS[n - 1]
-
-        // Count the first number out loud; later numbers are spoken from the arrows,
-        // synchronously, so navigation is blocked until that audio finishes.
-        LaunchedEffect(Unit) { services.speech.say(NUMBERS[n - 1]) }
 
         KidScreen(onExit = onExit, colors = listOf(Color(0xFFEDE7FF), Color(0xFFEAF2FF))) {
             Column(
@@ -125,13 +131,25 @@ class NumbersMiniGame : MiniGame {
                 // Arrows wait until the audio has finished before moving on.
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     KidCircleButton(
-                        onClick = { if (!speaking && n > 1) { n--; services.speech.say(NUMBERS[n - 1]) } },
+                        onClick = {
+                            if (!speaking && n > 1) {
+                                n--
+                                scope.launch { services.settings.setNumbersCurrent(n) }
+                                services.speech.say(NUMBERS[n - 1])
+                            }
+                        },
                         glyph = "◀",
                         size = 72,
                         containerColor = if (speaking) Color(0xFFE3E0EC) else Color.White,
                     )
                     KidCircleButton(
-                        onClick = { if (!speaking && n < 10) { n++; services.speech.say(NUMBERS[n - 1]) } },
+                        onClick = {
+                            if (!speaking && n < 10) {
+                                n++
+                                scope.launch { services.settings.setNumbersCurrent(n) }
+                                services.speech.say(NUMBERS[n - 1])
+                            }
+                        },
                         glyph = "▶",
                         size = 72,
                         containerColor = if (speaking) Color(0xFFE3E0EC) else Color.White,
